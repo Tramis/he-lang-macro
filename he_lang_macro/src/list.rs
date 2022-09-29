@@ -1,6 +1,4 @@
-
 pub type List<T> = Vec<T>;
-
 
 // pub struct ListNode<T>{
 

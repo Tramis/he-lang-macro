@@ -1,11 +1,12 @@
 mod executor;
-mod parser;
-mod types;
 mod list;
 mod log;
+mod parser;
+mod scope;
+mod types;
 
-mod test_examples;
 mod lexer;
+mod test_examples;
 
 fn main() {
     let s = r"

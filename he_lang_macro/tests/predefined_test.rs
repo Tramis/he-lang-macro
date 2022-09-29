@@ -1,8 +1,4 @@
-
-
-
-mod test{
+mod test {
     #[test]
-    fn test_print(){
-    }
+    fn test_print() {}
 }

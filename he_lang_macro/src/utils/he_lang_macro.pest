@@ -4,10 +4,10 @@ COMMENT = _{
     | "//" ~ (!"\n" ~ ANY)*
 }
 
-he_symbol = {"|"}
+he_symbol = _{"|"}
 
 // strings
-char = {
+char = _{
     !("\"" | "\\") ~ ANY
 
     | "\\" ~ ("\"" | "\\" | "\'" | "(" | ")" | "|" )
@@ -15,8 +15,9 @@ char = {
     // | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
 
-string = { "\"" ~ char* ~ "\"" | "'" ~ char* ~ "'"}
+string = { "\"" ~ real_string ~ "\"" | "'" ~ real_string ~ "'"}
 
+real_string = {char*}
 
 // int
 int = @{
@@ -45,17 +46,18 @@ macro_def_contents = {
     | macro_def_content
 }
 
-m1 = {"(" ~ ")" ~ "=>" ~ macro_body ~  ";"}
-m2 = {"(" ~ macro_def_params ~ ")" ~ "=>" ~ "{" ~ macro_body ~ "}" ~ ";"}
-m3 = {"(" ~ macro_def_params ~ ")" ~ "=>" ~ macro_body ~  ";"}
-
 macro_def_content = {
-    m1 | m2 | m3
+    macro_def_params ~ "=>" ~ macro_body
 }
 
 macro_def_params = {
-    dollar
-    | dollar ~ he_symbol ~ macro_def_params
+    "(" ~ ")"
+    | "(" ~ dollars ~")"
+}
+
+dollars = {
+    dollar ~ he_symbol ~ dollars
+    | dollar
 }
 
 dollar = {
@@ -63,7 +65,18 @@ dollar = {
 }
 
 macro_body = {
-    ANY*
+    "{" ~ macro_body_str ~ "}" ~ (!"\\" ~ ";")
+    | macro_body_str ~  (!"\\" ~ ";")
+}
+
+macro_body_str = {
+    macro_body_char*
+}
+
+macro_body_char = _{
+        !("\\" | ";" | "}" | "{") ~ ANY
+        | "\\" ~ (";" | "}" | "{")
+    
 }
 
 statements = {
@@ -75,16 +88,37 @@ statement = {
     expression ~ ";" | macro_def
 }
 
+other_char = _{
+    !("\\" | "|" | "(" | ")") ~ ANY
+    | "\\" ~ ("|" | "(" | ")")
+}
+
+other = { other_char* }
+
+paren_char = _{
+    !("\\" | "(" | ")") ~ ANY
+    | "\\" ~ ("(" | ")")
+}
+
+paren_str = {
+    paren_char*
+}
+
+paren = {
+    "(" ~ paren_str ~ ")"
+}
 
 expression = {
-    int 
-    | ident
-    | string 
+    paren
     | macro_call
+    | int
+    | string
+    | other
 }
 
 macro_call = {
-    macro_ident ~ "(" ~ call_params ~ ")" 
+    macro_ident ~ "(" ~ ")" 
+    | macro_ident ~ "(" ~ call_params ~ ")" 
 }
 
 call_params = {
@@ -94,11 +128,11 @@ call_params = {
 
 call_param = {
     expression
-    | ANY*
 }
 
 main = _{
     SOI
+    // ~ statements
     ~ statements
     ~ EOI
 }
