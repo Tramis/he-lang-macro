@@ -2,19 +2,38 @@
 
 use crate::list::*;
 
-type MacroFrom = List<HeType>;
-type MacroTo = List<HeType>;
 
 pub enum HeType {
     Data(HePrimitive),
     Ident { name: String, value: Option<Box<HeType>> },
-    Macro { from: MacroFrom, to: MacroTo },
+    Macro(Macro),
+    Expression(Expression)
 }
 
-enum HePrimitive {
+pub struct Macro{
+    from: List<HeType>,
+    to: String
+}
+
+pub enum Expression{
+    /// macro call
+    Call{
+        macro_name: Macro,
+        params: List<HeType>
+    },
+    /// parentheses
+    Parenthese(Option<Box<Expression>>),
+
+}
+
+pub enum HePrimitive {
     Int(i32),
     String(String),
     List(Box<HePrimitive>),
-    // he symbol
-    Symbol,
+    Other,
+}
+
+pub trait MyType{
+    type Type;
+    
 }

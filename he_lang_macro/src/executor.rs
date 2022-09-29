@@ -2,5 +2,5 @@
 
 trait Excutable{
     type Output;
-    fn excute(&self) -> Output;
+    fn excute(&self) -> Self::Output;
 }

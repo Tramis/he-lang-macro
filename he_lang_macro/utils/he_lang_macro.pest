@@ -1,0 +1,104 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{
+    "/*" ~ (!"*/" ~ ANY)* ~ "*/" 
+    | "//" ~ (!"\n" ~ ANY)*
+}
+
+he_symbol = {"|"}
+
+// strings
+char = {
+    !("\"" | "\\") ~ ANY
+
+    | "\\" ~ ("\"" | "\\" | "\'" | "(" | ")" | "|" )
+
+    // | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+string = { "\"" ~ char* ~ "\"" | "'" ~ char* ~ "'"}
+
+
+// int
+int = @{
+    "-"?
+    ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
+    // ~ ("." ~ ASCII_DIGIT*)?
+    // ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
+}
+
+// ident
+ident = {
+    ASCII_ALPHA+
+}
+
+macro_ident = {
+    ident ~ "!"
+}
+
+// macro def
+macro_def = {
+    macro_ident ~ "=" ~ "{" ~ macro_def_contents ~ "}" 
+}
+
+macro_def_contents = {
+    macro_def_content ~ macro_def_contents 
+    | macro_def_content
+}
+
+m1 = {"(" ~ ")" ~ "=>" ~ macro_body ~  ";"}
+m2 = {"(" ~ macro_def_params ~ ")" ~ "=>" ~ "{" ~ macro_body ~ "}" ~ ";"}
+m3 = {"(" ~ macro_def_params ~ ")" ~ "=>" ~ macro_body ~  ";"}
+
+macro_def_content = {
+    m1 | m2 | m3
+}
+
+macro_def_params = {
+    dollar
+    | dollar ~ he_symbol ~ macro_def_params
+}
+
+dollar = {
+    "$" ~ ident
+}
+
+macro_body = {
+    ANY*
+}
+
+statements = {
+    statement ~ statements 
+    | statement
+}
+
+statement = {
+    expression ~ ";" | macro_def
+}
+
+
+expression = {
+    int 
+    | ident
+    | string 
+    | macro_call
+}
+
+macro_call = {
+    macro_ident ~ "(" ~ call_params ~ ")" 
+}
+
+call_params = {
+    call_param ~ he_symbol ~ call_params
+    | call_param
+}
+
+call_param = {
+    expression
+    | ANY*
+}
+
+main = _{
+    SOI
+    ~ statements
+    ~ EOI
+}

@@ -41,11 +41,11 @@ he-lang print!(1 | 2 | 3)
 a! = {
     ($a | $b | $c) => {
         $a | $c
-    }
+    };
 
     ($a | $c) => {
         ($c)
-    }
+    };
 }
 
 
@@ -53,13 +53,13 @@ a! = {
 // use macro
 // 
 // output shoull be: `1 3`
-print! (a! (1 | 2 | 3))
+print! (a! (1 | 2 | 3));
 
 
 // nested call
 // 
 // output should be `3`
-print! (a! (a! (1 | 2 | 3)))
+print! (a! (a! (1 | 2 | 3)));
 
 
 // macro `print!` equals its input
@@ -67,7 +67,7 @@ print! (a! (a! (1 | 2 | 3)))
 // output should be: 
 // `1 | 2`
 // `1 | 2`
-print! (print!(1 | 2))
+print! (print!(1 | 2));
 
 ```
 
@@ -75,9 +75,9 @@ print! (print!(1 | 2))
 
 ```rust
 a! = {
-    (0) => {0}
+    (0) => {0};
     ($a | $b) => {
-        $a + a!($b)
+        $a + a!($b);
     }
 }
 
@@ -95,36 +95,36 @@ a =
 
 - `print!`
 ```rust
-print!(1 | 2)
-print!(1, 2, 3)
+print!(1 | 2);
+print!(1, 2, 3);
 
 // 
 
-print!(print!(1 | 2))
+print!(print!(1 | 2));
 
 // if input is not string / int, `print!(a)` equals `print!(string!((!a)))
 // output: 
 // "(!print)"
-print!(print!)
+print!(print!);
 ```
 
 - `string!`
 ```rust
 // "a s v dfv fd"
-print!(string!(a s v dfv fd))
+print!(string!(a s v dfv fd));
 // 
-print!(print!)
+print!(print!);
 ```
 
 - `$sep`
 ```rust
 one_two_one! = {
-    ($a, $b) => {$a $b $a}
+    ($a, $b) => {$a $b $a};
 }
 
 make_two! = {
     ($a) => {
-        one_two_one!($a, $sep)
+        one_two_one!($a, $sep);
     }
 }
 
@@ -133,29 +133,29 @@ make_two! = {
 
 ```rust
 b! = {
-    c!
+    () => c!;
 }
 
 ab! = {
-    () => end!
+    () => end!;
 }
 
 ac! = {
-    () => "in ac"
+    () => "in ac";
 }
 
 end! = {
-    () => "ended"
+    () => "ended";
 }
 
 make_macro! = {
     (1) => {
         ab!()()
-    }
+    };
 
     (2) => {
         a(b!)()()
-    }
+    };
 }
 
 // output should be
@@ -163,6 +163,6 @@ make_macro! = {
 //  "ended"
 //  "in ac"
 
-print!(make_macro!(1))
-print!(make_macro!(2))
+print!(make_macro!(1));
+print!(make_macro!(2));
 ```
