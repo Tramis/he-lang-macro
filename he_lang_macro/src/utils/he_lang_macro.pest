@@ -29,7 +29,7 @@ int = @{
 
 // ident
 ident = {
-    ASCII_ALPHA+
+    ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)*
 }
 
 macro_ident = {

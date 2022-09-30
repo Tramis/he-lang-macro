@@ -2,12 +2,22 @@ one! = {
     () => ;
 }
 
-next! = {
+add! = {
     ($a) => {
         $a | 
     };
 }
 
-print!(count!(|));
-print!(count!(one!()));
-print!(count!(next!(one!())));
+print!( count!(|));
+print!( count!( one!()));
+// print!( count!( add!( one!())));
+
+print!( 
+    count! ( 
+        add! ( 
+            add! ( 
+                one!()
+            )
+        )
+    )
+);

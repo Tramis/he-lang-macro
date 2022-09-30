@@ -205,7 +205,7 @@ impl Macro {
 ///                 ---
 /// ```
 fn do_it(s: &mut String, scope: Rc<RefCell<Scope>>) -> bool {
-    let re_macro_call = regex!(r"[a-zA-Z]+[[:space:]]*!(.*)");
+    let re_macro_call = regex!(r"[a-zA-Z][a-zA-Z0-9]+[[:space:]]*!(.*)");
 
     let begin = re_macro_call.find(s);
     match begin {
@@ -257,6 +257,8 @@ pub fn link_start(s: &str) {
     let scope = Rc::new(RefCell::new(Scope::new()));
     let statements = parse_main(he_parse_with_rule(s, Rule::main));
 
+    log_success!(format!("{statements:#?}"));
+
     for statement in statements {
         match statement {
             HeType::Expression(expr) => match expr {
@@ -304,20 +306,18 @@ mod test {
 
         link_start(
             r#"
-        one! = {
-            () => ;
-        }
+            one! = {
+                () => ;
+            }
+            
+            add1! = {
+                ($a) => {
+                    $a | 
+                };
+            }
         
-        next! = {
-            ($a) => {
-                $a | 
-            };
-        }
-        
-        // print!(count!( |));
         print!(count!(|));
-        // print!(count!(one!()));
-        print!(count!(next!(one!())));
+        print!(count!(add1!(add1!(one!()))));
     "#,
         );
     }
