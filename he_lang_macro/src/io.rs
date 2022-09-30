@@ -13,7 +13,7 @@ pub fn log_init() {
 
 macro_rules! log_msg {
     ($msg: expr) => {
-        log::info!("{}", ansi_term::Colour::Blue.paint(format!("{}", $msg)))
+        log::info!("{}", $msg)
     };
 }
 
@@ -53,11 +53,23 @@ pub(crate) use log_normal;
 pub(crate) use log_success;
 pub(crate) use std_out;
 
-use std::io;
-pub fn input() {
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("error input");
+/// ## return false if escape
+/// TODO: more input action
+pub fn input() -> bool {
+    use once_cell::sync::OnceCell;
+    static STD_OUT: OnceCell<console::Term> = OnceCell::new();
+    STD_OUT.get_or_init(|| console::Term::buffered_stdout());
 
-    // TODO
-    // process input cmd
+    match STD_OUT.get().unwrap().read_key() {
+        Err(e) => {
+            panic!("{e}")
+        }
+        Ok(k) => {
+            use console::Key;
+            match k {
+                Key::Char(ch) if ch == 'q' => false,
+                _ => true,
+            }
+        }
+    }
 }

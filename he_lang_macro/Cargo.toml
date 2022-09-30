@@ -1,6 +1,6 @@
 [package]
 name = "he-lang"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -17,6 +17,7 @@ once_cell = {version = "1"}
 log = {version = "*"}
 serde_yaml = {version = "*"}
 clap = {version = "*", features = ["derive"]}
+console = {version = "*"}
 
 [profile.dev]
 opt-level = 0

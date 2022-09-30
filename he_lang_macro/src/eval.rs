@@ -2,7 +2,7 @@ use core::cell::RefCell;
 use std::rc::Rc;
 
 use crate::{
-    io::{input, log_normal, log_success, std_out},
+    io::{input, log_msg, log_normal, log_success, std_out},
     list::List,
     parser::{he_parse_with_rule, parse_expr, parse_main, parse_params, Rule},
     scope::Scope,
@@ -261,6 +261,9 @@ pub fn link_start(s: &str) {
         match statement {
             HeType::Expression(expr) => match expr {
                 Expression::MacroCall(macro_call) => {
+                    log_msg!(ansi_term::Color::Cyan
+                        .bold()
+                        .paint(format!("\n\t {}\n", macro_call.to_string())));
                     let res = macro_call.eval(scope.clone()).to_string();
                     log_success!(format!("success:\n    {s}\n => {:#?}", res));
                 }
