@@ -12,3 +12,5 @@ pest = {version = "*"}
 pest_derive = {version = "*"}
 ansi_term = {version = "*"}
 log4rs = {version = "1.1"}
+regex = {version = "1"}
+once_cell = {version = "1"}

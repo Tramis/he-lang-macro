@@ -69,9 +69,7 @@ make_examples!(
             ($a | $b| $c) => {gfdsgf};
         }
         "#;
-
         def_macro_2 = r#"b! = {() => ;}"#;
-
         def_macro_cat = r#"
         cat! = {
             ($a | $b) => $a$b;
@@ -79,22 +77,25 @@ make_examples!(
         "#;
 
         expression_1 = "1;";
-
         expression_s_123 = r#""123";"#;
 
         macro_call_1 = r#"a!(1 | 2 | 3);"#;
-
-        macro_call_empty_param = r#"a!( | ||);"#;
-
+        macro_call_empty_param = r#"a!(   );"#;
+        macro_call_empty_param_4 = r#"a!( | ||);"#;
         macro_call_any_param = r#"a!(fdsaf&fd438r4\));"#;
-
         macro_call_paren_param = r#"a!(1|(|)|2);"#
     ]
 );
 
 make_examples!(
     PRE_DEFINED,
-    [macro_call_string = r#"string!(gfdsagdfasf90 90dsafj d| sad );"#]
+    [
+        macro_call_string = r#"string!(gfdsagdfasf90 90dsafj d| sad );"#;
+
+        macro_call_print = r#"print!(1 | 2)"#;
+
+        macro_call_count = r#"count!(1 | (1 | 2) | 2)"#
+    ]
 );
 
 #[test]

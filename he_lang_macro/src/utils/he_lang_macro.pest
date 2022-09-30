@@ -117,8 +117,8 @@ expression = {
 }
 
 macro_call = {
-    macro_ident ~ "(" ~ ")" 
-    | macro_ident ~ "(" ~ call_params ~ ")" 
+    // macro_ident ~ "(" ~ ")" | 
+    macro_ident ~ "(" ~ call_params ~ ")" 
 }
 
 call_params = {

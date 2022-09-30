@@ -1,6 +1,7 @@
 use ansi_term::Color::{Blue, Green, Red};
 use std::fmt::Display;
 
+/// print the original string
 pub fn log_msg(s: &str) {
     println!("{s}")
 }

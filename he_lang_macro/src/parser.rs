@@ -1,14 +1,19 @@
+use std::borrow::BorrowMut;
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::scope::Scope;
 use crate::{list::List, log::*};
 use crate::{test_examples, types::*};
 
 use ansi_term::Color::{Blue, Green, Red};
+use pest::iterators::Pairs;
 use pest::{iterators::Pair, Parser, RuleType};
 use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "./utils/he_lang_macro.pest"]
-struct HeParser;
+pub struct HeParser;
 
 fn handle_parse_error(e: pest::error::Error<Rule>) {
     const UP_ARROW: char = '^';
@@ -59,7 +64,7 @@ fn parse_value(pair: Pair<Rule>) -> HeType {
     unimplemented!()
 }
 
-pub fn parse_expr(mut pair: Pair<Rule>, scope: &mut Scope) -> Expression {
+pub fn parse_expr(mut pair: Pair<Rule>, scope: Rc<RefCell<Scope>>) -> Expression {
     let expr = pair.into_inner().next().unwrap();
     match expr.as_rule() {
         Rule::macro_call => {
@@ -74,6 +79,7 @@ pub fn parse_expr(mut pair: Pair<Rule>, scope: &mut Scope) -> Expression {
                 .as_str()
                 .to_string();
 
+            // redefined macro `string!`
             if ident.as_str() == "string" {
                 let s = if let Some(all_params) = macro_call.next() {
                     all_params.as_str()
@@ -84,21 +90,26 @@ pub fn parse_expr(mut pair: Pair<Rule>, scope: &mut Scope) -> Expression {
             }
 
             let mut m_call = MacroCall {
+                origin_param: "".to_string(),
                 macro_name: ident,
                 params: List::new(),
+                scope: scope.clone(),
             };
 
             let params = macro_call.next();
             if params.is_some() {
                 let mut params = params.unwrap();
+                m_call.origin_param = params.as_str().to_string();
+
                 let mut tmp_params = vec![];
                 to_vec!(params, tmp_params, Rule::call_params);
 
                 for p in tmp_params {
                     // let p = p.into_inner().next().unwrap().as_span().as_str();
-                    m_call
-                        .params
-                        .push(Box::new(parse_expr(p.into_inner().next().unwrap(), scope)))
+                    m_call.params.push(Box::new(parse_expr(
+                        p.into_inner().next().unwrap(),
+                        scope.clone(),
+                    )))
                 }
             }
 
@@ -133,7 +144,7 @@ pub fn parse_expr(mut pair: Pair<Rule>, scope: &mut Scope) -> Expression {
     }
 }
 
-fn parse_main(mut pair: Pair<Rule>, scope: &mut Scope) -> Vec<HeType> {
+fn parse_main(mut pair: Pair<Rule>, scope: Rc<RefCell<Scope>>) -> Vec<HeType> {
     let mut statements = vec![];
 
     to_vec!(pair, statements, Rule::statements);
@@ -142,7 +153,10 @@ fn parse_main(mut pair: Pair<Rule>, scope: &mut Scope) -> Vec<HeType> {
     for statement in statements {
         let statement_inner = statement.into_inner().next().unwrap();
         match statement_inner.as_rule() {
-            Rule::expression => res.push(HeType::Expression(parse_expr(statement_inner, scope))),
+            Rule::expression => res.push(HeType::Expression(parse_expr(
+                statement_inner,
+                scope.clone(),
+            ))),
             Rule::macro_def => {
                 let mut macro_def = statement_inner.into_inner();
                 let ident = macro_def.next().unwrap().into_inner().next().unwrap();
@@ -193,7 +207,7 @@ fn parse_main(mut pair: Pair<Rule>, scope: &mut Scope) -> Vec<HeType> {
 
                     res.push(HeType::MacroDef(m.clone()));
                     // push
-                    scope.push_macro(m);
+                    (*scope).borrow_mut().push_macro(m);
                 }
             }
 
@@ -207,15 +221,25 @@ fn parse_main(mut pair: Pair<Rule>, scope: &mut Scope) -> Vec<HeType> {
     res
 }
 
-pub fn parse_with_rule(s: &str, rule: Rule) {
+pub fn he_parse_with_rule(s: &str, rule: Rule) -> Pairs<Rule> {
+    match HeParser::parse(rule, s) {
+        Ok(v) => v,
+        Err(e) => {
+            handle_parse_error(e);
+            panic!("parse error")
+        }
+    }
+}
+
+fn parse_with_rule(s: &str, rule: Rule) {
     let res = HeParser::parse(rule, s);
 
     match res {
         Ok(mut res) => {
             log_msg(&Green.paint(format!("{res:#?}")).to_string());
 
-            let mut scope = Scope::new();
-            let res = parse_main(res.next().unwrap(), &mut scope);
+            let mut scope = Rc::new(RefCell::new(Scope::new()));
+            let res = parse_main(res.next().unwrap(), scope);
             println!("{res:#?}")
         }
         Err(e) => {
@@ -226,7 +250,35 @@ pub fn parse_with_rule(s: &str, rule: Rule) {
 }
 
 pub fn parse(s: &str) {
-    parse_with_rule(s, Rule::main)
+    let res = HeParser::parse(Rule::main, s);
+
+    match res {
+        Ok(mut res) => {
+            let scope = Rc::new(RefCell::new(Scope::new()));
+            let res = parse_main(res.next().unwrap(), scope);
+        }
+        Err(e) => {
+            handle_parse_error(e);
+        }
+    }
+}
+
+pub fn test_parse_with_rule(s: &str, rule: Rule){
+    let res = HeParser::parse(rule, s);
+
+    match res {
+        Ok(mut res) => {
+            log_msg(&Green.paint(format!("{res:#?}")).to_string());
+
+            let scope = Rc::new(RefCell::new(Scope::new()));
+            let res = parse_main(res.next().unwrap(), scope);
+            println!("{res:#?}")
+        }
+        Err(e) => {
+            // log_normal(format!("{:#?}", &e));
+            handle_parse_error(e);
+        }
+    }
 }
 
 #[test]
@@ -242,6 +294,7 @@ fn test_s() {
     // parse(expression_s_123);
 
     // parse(test_examples::macro_call_empty_param);
+    
 
     // parse(test_examples::macro_call_any_param);
 
@@ -251,6 +304,7 @@ fn test_s() {
 
     // parse(macro_call_string);
 
+    parse_with_rule(r#""#, Rule::call_params)
     // parse_with_rule(r#"fdsafd!((())"#, Rule::expression);
     // parse_with_rule(r#"fdsf$_\)"#, Rule::expression);
     // parse_with_rule(r#""#, Rule::expression);

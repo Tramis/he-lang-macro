@@ -4,6 +4,8 @@ use std::collections::HashMap;
 
 type Stack<T> = Vec<T>;
 
+
+#[derive(Debug)]
 pub struct Scope {
     macros: HashMap<String, List<Macro>>,
 }

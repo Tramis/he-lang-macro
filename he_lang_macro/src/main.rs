@@ -1,4 +1,4 @@
-mod executor;
+mod eval;
 mod list;
 mod log;
 mod parser;
