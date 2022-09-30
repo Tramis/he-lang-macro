@@ -10,7 +10,7 @@ pub enum HeType {
 #[derive(Debug, Clone)]
 pub struct Macro {
     pub name: String,
-    pub from: List<String>,
+    pub from: List<(usize, String)>,
     pub to: String,
 }
 

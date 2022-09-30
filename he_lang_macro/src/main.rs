@@ -9,6 +9,7 @@ mod list;
 mod parser;
 mod scope;
 mod types;
+mod escape;
 
 // mod lexer;
 mod test_examples;

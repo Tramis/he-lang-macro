@@ -92,6 +92,20 @@ make_examples!(
         f! = { () => 1; }
         
         print!(a!(b!(c!(d!(e!(f!()))))));
+        "#;
+
+        add_test = r#"
+        add1 ! = {
+            ( ) => | () ;
+            ( | $a) => {
+                | ( | $a)
+            };
+        }
+
+        add1 ! (| ( | \(| \)));
+
+        // print!(print_params!(add1!(add1!())));
+        // print!(print_params!(add1!(add1!(add1!()))));
         "#
     ]
 );

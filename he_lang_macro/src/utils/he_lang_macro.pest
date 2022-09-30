@@ -29,7 +29,7 @@ int = @{
 
 // ident
 ident = {
-    ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)*
+    ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT | "_")*
 }
 
 macro_ident = {
@@ -76,7 +76,7 @@ macro_body_str = {
 
 macro_body_char = _{
         !("\\" | ";" | "}" | "{" | " ") ~ ANY
-        | "\\" ~ (";" | "}" | "{" | " ")
+        | "\\" ~ ("\\" | ";" | "}" | "{" | " ")
     
 }
 
@@ -91,14 +91,14 @@ statement = {
 
 other_char = _{
     !("\\" | "|" | "(" | ")" | " ") ~ ANY
-    | "\\" ~ ("|" | "(" | ")" | " ")
+    | "\\" ~ ("\\" |"|" | "(" | ")" | " ")
 }
 
 other = { other_char* }
 
 paren_char = _{
     !("\\" | "(" | ")") ~ ANY
-    | "\\" ~ ("(" | ")")
+    | "\\" ~ ("\\" |"(" | ")")
 }
 
 paren_str = {

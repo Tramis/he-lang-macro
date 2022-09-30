@@ -2,22 +2,33 @@ one! = {
     () => ;
 }
 
-add! = {
+unwrap! = {
     ($a) => {
-        $a | 
+        $a
     };
 }
 
-print!( count!(|));
-print!( count!( one!()));
-// print!( count!( add!( one!())));
+// define
+// () = 0
+// ( | ()) = 1
+// ( | ( | ())) = 2
 
-print!( 
-    count! ( 
-        add! ( 
-            add! ( 
-                one!()
-            )
-        )
-    )
-);
+add1 ! = {
+    ( ) => | () ;
+    ( | $a) => {
+        | ( | $a)
+    };
+}
+
+not! = {
+    () => | ;
+    (|) => ;
+}
+
+// print!(count!(not!()));
+// print!(count!(not!(not!())));
+
+// print!(add1!());
+// print!(add1!(add1!()));
+// print!(add1!(add1!(add1!())));
+print!(add1!(add1!(add1!(add1!(add1!())))));

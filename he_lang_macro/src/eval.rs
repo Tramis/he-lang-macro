@@ -2,7 +2,8 @@ use core::cell::RefCell;
 use std::rc::Rc;
 
 use crate::{
-    io::{input, log_msg, log_normal, log_success, std_out},
+    escape::Escape,
+    io::{input, log_error, log_msg, log_normal, log_success, std_out, std_out_msg},
     list::List,
     parser::{he_parse_with_rule, parse_expr, parse_main, parse_params, Rule},
     scope::Scope,
@@ -106,6 +107,7 @@ impl MacroCall {
                 into_do_it(&mut tmp_string, scope.clone());
 
                 std_out!(format!("`print` output: \"{tmp_string}\""));
+                tmp_string.unescape();
 
                 (*scope).borrow_mut().stack.pop();
                 return Expression::Data(HePrimitive::String(tmp_string));
@@ -117,6 +119,7 @@ impl MacroCall {
 
                 into_do_it(&mut tmp_string, scope.clone());
 
+                tmp_string.escape_parenthese();
                 let params = he_parse_with_rule(&tmp_string, Rule::call_params);
                 let params = parse_params(params);
 
@@ -124,20 +127,63 @@ impl MacroCall {
                 Expression::Data(HePrimitive::Int(params.len() as i32))
             }
 
+            "print_params" => {
+                let mut tmp_string = self.origin_param.clone();
+
+                into_do_it(&mut tmp_string, scope.clone());
+
+                tmp_string.escape_parenthese();
+
+                let params = he_parse_with_rule(&tmp_string, Rule::call_params);
+                let params = parse_params(params);
+
+                std_out!(format!("[DEBUG]\n{params:#?}"));
+                Expression::Raw(
+                    params
+                        .into_iter()
+                        .map(|x| {
+                            let mut x = x.to_string();
+                            x.unescape();
+                            x
+                        })
+                        .collect(),
+                )
+            }
+
             name => {
                 let mut tmp_string = self.origin_param.clone();
 
                 into_do_it(&mut tmp_string, scope.clone());
 
+                log_msg!(ansi_term::Color::Red.paint(format!("'{}'", tmp_string)));
+                if (*scope).borrow().stack.len() > 1 {
+                    tmp_string.escape_parenthese();
+                }
+                log_msg!(ansi_term::Color::Red.paint(format!("'{}'", tmp_string)));
+                crate::parser::test::test_parse_params(&tmp_string);
+
                 let params = parse_params(he_parse_with_rule(&tmp_string, Rule::call_params));
+
+                log_normal!(format!("macro calling: params: {params:#?}"));
 
                 let mac = (*scope).borrow().match_macro(name, params.len()).cloned();
                 match mac {
                     Some(mac) => {
+                        log_normal!(format!("calling macro: {:#?}", mac));
                         let res = Expression::Raw(
-                            mac.replace(params.into_iter().map(|x| x.to_string()).collect()),
+                            mac.replace(
+                                params
+                                    .into_iter()
+                                    .map(|x| {
+                                        let mut x = x.to_string();
+                                        x.unescape();
+                                        x
+                                    })
+                                    .collect(),
+                            ),
                         );
 
+                        log_normal!(format!("macro call return: {:#?}", res));
                         (*scope).borrow_mut().stack.pop();
                         // match the macro params
                         res
@@ -154,9 +200,13 @@ impl MacroCall {
 
 impl Macro {
     pub fn new(name: String, from: List<String>, to: String) -> Macro {
-        let mut res = Macro { name, from, to };
+        let mut res = Macro {
+            name,
+            from: from.into_iter().enumerate().collect(),
+            to,
+        };
 
-        res.from.sort_by(|a, b| a.len().cmp(&b.len()).reverse());
+        res.from.sort_by(|a, b| a.1.len().cmp(&b.1.len()).reverse());
 
         res
     }
@@ -171,15 +221,22 @@ impl Macro {
         fn dfs<'a>(
             now_string: String,
             i: usize,
-            names: &Vec<String>,
+            names: &Vec<(usize, String)>,
             values: &Vec<String>,
         ) -> String {
             if i == names.len() {
                 return now_string;
             }
 
-            let name = &names[i];
+            let name = &names
+                .iter()
+                .filter(|x| x.0 == i)
+                .next()
+                .expect("unknown macro call")
+                .1;
             let value = &values[i];
+
+            log_msg!(ansi_term::Color::Purple.paint(format!("dfs name: {name} => value: {value}")));
 
             if name.is_empty() {
                 return dfs(now_string, i + 1, names, values);
@@ -192,7 +249,10 @@ impl Macro {
             }
         }
 
-        dfs(self.to.clone(), 0, &self.from, &params).to_string()
+        log_msg!(ansi_term::Color::Yellow.paint(format!("dfs before {}", &self.to)));
+        let res = dfs(self.to.clone(), 0, &self.from, &params).to_string();
+        log_msg!(ansi_term::Color::Yellow.paint(format!("dfs after {}", &res)));
+        res
     }
 }
 
@@ -205,7 +265,7 @@ impl Macro {
 ///                 ---
 /// ```
 fn do_it(s: &mut String, scope: Rc<RefCell<Scope>>) -> bool {
-    let re_macro_call = regex!(r"[a-zA-Z][a-zA-Z0-9]+[[:space:]]*!(.*)");
+    let re_macro_call = regex!(r"[a-zA-Z_][a-zA-Z_0-9]+[[:space:]]*!(.*)");
 
     let begin = re_macro_call.find(s);
     match begin {
@@ -263,7 +323,7 @@ pub fn link_start(s: &str) {
         match statement {
             HeType::Expression(expr) => match expr {
                 Expression::MacroCall(macro_call) => {
-                    log_msg!(ansi_term::Color::Cyan
+                    std_out_msg!(ansi_term::Color::Cyan
                         .bold()
                         .paint(format!("\n\t {}\n", macro_call.to_string())));
                     let res = macro_call.eval(scope.clone()).to_string();
@@ -304,22 +364,7 @@ mod test {
         // link_start(print_recurse_call);
         // link_start(nested_call);
 
-        link_start(
-            r#"
-            one! = {
-                () => ;
-            }
-            
-            add1! = {
-                ($a) => {
-                    $a | 
-                };
-            }
-        
-        print!(count!(|));
-        print!(count!(add1!(add1!(one!()))));
-    "#,
-        );
+        link_start(add_test);
     }
 
     #[test]

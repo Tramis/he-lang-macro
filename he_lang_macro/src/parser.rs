@@ -118,16 +118,7 @@ pub fn parse_expr(pair: Pair<Rule>) -> Expression {
             return Expression::Data(HePrimitive::String(string.as_span().as_str().to_string()));
         }
         Rule::other => return Expression::Raw(expr.as_span().as_str().to_string()),
-        Rule::paren => {
-            return Expression::Raw(
-                expr.into_inner()
-                    .next()
-                    .unwrap()
-                    .as_span()
-                    .as_str()
-                    .to_string(),
-            )
-        }
+        Rule::paren => return Expression::Raw(expr.as_span().as_str().to_string()),
         _ => unreachable!("unexpected expression: {expr:#?}"),
     }
 }
@@ -222,6 +213,8 @@ pub fn he_parse_with_rule(s: &str, rule: Rule) -> Pair<Rule> {
 
 #[allow(unused)]
 pub(crate) mod test {
+    use crate::escape::Escape;
+
     use super::*;
     fn he_parse_with_rule_test(s: &str, rule: Rule) -> Pair<Rule> {
         match HeParser::parse(rule, s) {
@@ -237,7 +230,7 @@ pub(crate) mod test {
         }
     }
 
-    fn test_parse_params(s: &str) {
+    pub fn test_parse_params(s: &str) {
         let scope = Rc::new(RefCell::new(Scope::new()));
         log_success!(format!(
             "{:#?}",
@@ -285,7 +278,10 @@ pub(crate) mod test {
 
         // parse(macro_call_string);
 
-        // test_parse_params(r#"321 | "fsd" | (|) | a!(fds)"#);
+        let mut s = String::from(" | ( a | ( | ) )");
+        s.escape_parenthese();
+
+        test_parse_params(" | ( | \\(| \\))");
         // parse_with_rule(r#"fdsafd!((())"#, Rule::expression);
         // parse_with_rule(r#"fdsf$_\)"#, Rule::expression);
         // parse_with_rule(r#""#, Rule::expression);

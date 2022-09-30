@@ -13,7 +13,7 @@ pub fn log_init() {
 
 macro_rules! log_msg {
     ($msg: expr) => {
-        log::info!("{}", $msg)
+        log::debug!("{}", $msg)
     };
 }
 
@@ -47,11 +47,18 @@ macro_rules! std_out {
     };
 }
 
+macro_rules! std_out_msg {
+    ($msg: expr) => {
+        log::info!("  {}", $msg)
+    };
+}
+
 pub(crate) use log_error;
 pub(crate) use log_msg;
 pub(crate) use log_normal;
 pub(crate) use log_success;
 pub(crate) use std_out;
+pub(crate) use std_out_msg;
 
 /// ## return false if escape
 /// TODO: more input action
