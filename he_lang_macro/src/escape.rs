@@ -1,6 +1,4 @@
-use regex::Replacer;
 
-use crate::io::log_normal;
 
 pub trait Escape {
     fn escape_parenthese(&mut self);

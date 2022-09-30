@@ -124,8 +124,8 @@ one_two_one! = {
 
 make_two! = {
     ($a) => {
-        one_two_one!($a, $sep);
-    }
+        one_two_one!($a, $sep)
+    };
 }
 
 ```

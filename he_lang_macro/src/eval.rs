@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::{
     escape::Escape,
-    io::{input, log_error, log_msg, log_normal, log_success, std_out, std_out_msg},
+    io::{input, log_msg, log_normal, log_success, std_out, std_out_msg},
     list::List,
     parser::{he_parse_with_rule, parse_expr, parse_main, parse_params, Rule},
     scope::Scope,
