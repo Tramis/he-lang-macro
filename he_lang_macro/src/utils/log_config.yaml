@@ -1,0 +1,31 @@
+appenders:
+  dev:
+    kind: console
+    encoder:
+      pattern: " [{l}] [{f}:{L}] {m}{n}"
+    filters:
+      - kind: threshold
+        level: debug
+
+  output:
+    kind: console
+    encoder:
+      pattern: ">> {m}{n}"
+    filters:
+      - kind: threshold
+        level: info
+
+  # file_log:
+  #   kind: file
+  #   path: "./log/eval.log"
+  #   encoder:
+  #     pattern: "{t} {f}:{l} - {m}{n}"
+
+
+root:
+  level: info
+  appenders:
+    - output
+  # level: debug
+  # appenders:
+  #   - dev

@@ -1,6 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{list::*, scope::Scope};
+use crate::list::*;
 
 #[derive(Debug, Clone)]
 pub enum HeType {
@@ -18,10 +16,23 @@ pub struct Macro {
 
 #[derive(Debug, Clone)]
 pub struct MacroCall {
-    pub scope: Rc<RefCell<Scope>>,
+    // scope should be specified when actually called
+    // pub scope: Rc<RefCell<Scope>>,
     pub macro_name: String,
     pub origin_param: String,
-    pub params: List<Box<Expression>>,
+    // remove params, parse while the macro really call
+    // pub params: List<Box<Expression>>,
+}
+
+impl MacroCall {
+    pub fn to_string(&self) -> String {
+        let mut res = self.macro_name.clone();
+
+        res += "! ( ";
+        res += &self.origin_param;
+        res += " )";
+        res
+    }
 }
 
 #[derive(Debug, Clone)]

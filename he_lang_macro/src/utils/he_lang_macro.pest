@@ -51,8 +51,8 @@ macro_def_content = {
 }
 
 macro_def_params = {
-    "(" ~ ")"
-    | "(" ~ dollars ~")"
+    // "(" ~ ")"| 
+    "(" ~ dollars ~")"
 }
 
 dollars = {
@@ -62,6 +62,7 @@ dollars = {
 
 dollar = {
     "$" ~ ident
+    | ""
 }
 
 macro_body = {
@@ -74,8 +75,8 @@ macro_body_str = {
 }
 
 macro_body_char = _{
-        !("\\" | ";" | "}" | "{") ~ ANY
-        | "\\" ~ (";" | "}" | "{")
+        !("\\" | ";" | "}" | "{" | " ") ~ ANY
+        | "\\" ~ (";" | "}" | "{" | " ")
     
 }
 
@@ -89,8 +90,8 @@ statement = {
 }
 
 other_char = _{
-    !("\\" | "|" | "(" | ")") ~ ANY
-    | "\\" ~ ("|" | "(" | ")")
+    !("\\" | "|" | "(" | ")" | " ") ~ ANY
+    | "\\" ~ ("|" | "(" | ")" | " ")
 }
 
 other = { other_char* }

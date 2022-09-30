@@ -1,4 +1,4 @@
-use crate::log::handle_error;
+use crate::io::handle_error;
 use logos::Logos;
 use strum_macros::IntoStaticStr;
 

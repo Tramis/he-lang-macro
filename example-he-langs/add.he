@@ -1,0 +1,13 @@
+one! = {
+    () => ;
+}
+
+next! = {
+    ($a) => {
+        $a | 
+    };
+}
+
+print!(count!(|));
+print!(count!(one!()));
+print!(count!(next!(one!())));

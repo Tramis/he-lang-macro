@@ -4,11 +4,13 @@ macro_rules! make_examples {
     ($group_name: ident, [$($name:ident = $s:expr);*]) => {
         macro_rules! make_example{
             ($name_1:ident = $s_1:expr) =>{
+                #[allow(unused, nonstandard_style)]
                 pub const $name_1: &str = $s_1;
             };
         }
 
         $(make_example!($name = $s);)*
+        #[allow(unused)]
         pub const $group_name: &[&str] = &[$($name,)*];
     };
 }
@@ -24,7 +26,8 @@ make_examples!(
 
 make_examples!(
     COMPLEX,
-    [COMPLEXT_1 = r#"
+    [
+        COMPLEXT_1 = r#"
         b! = {
             () => c!;
         }
@@ -58,7 +61,39 @@ make_examples!(
         
         print!(make_macro!(1));
         print!(make_macro!(2));
-        "#]
+        "#;
+
+        define_and_call = r#"
+        
+        a! = {
+            () => 123;
+        }
+
+        print!(a!());
+        
+        "#;
+
+        recurse_call = r#"
+        a! = { () => a!(); }
+        a!();
+        "#;
+
+        print_recurse_call = r#"
+        a! = { () => a!(); }
+        print!(a!());
+        "#;
+
+        nested_call = r#"
+        a! = { () => 1; }
+        b! = { () => 1; }
+        c! = { () => 1; }
+        d! = { () => 1; }
+        e! = { () => 1; }
+        f! = { () => 1; }
+        
+        print!(a!(b!(c!(d!(e!(f!()))))));
+        "#
+    ]
 );
 
 make_examples!(
@@ -92,9 +127,9 @@ make_examples!(
     [
         macro_call_string = r#"string!(gfdsagdfasf90 90dsafj d| sad );"#;
 
-        macro_call_print = r#"print!(1 | 2)"#;
+        macro_call_print = r#"print!(1 | 2);"#;
 
-        macro_call_count = r#"count!(1 | (1 | 2) | 2)"#
+        macro_call_count = r#"count!(1 | (1 | 2) | 2);"#
     ]
 );
 

@@ -1,6 +1,6 @@
 [package]
-name = "he_lang_macro"
-version = "0.1.0"
+name = "he-lang"
+version = "0.1.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,3 +14,12 @@ ansi_term = {version = "*"}
 log4rs = {version = "1.1"}
 regex = {version = "1"}
 once_cell = {version = "1"}
+log = {version = "*"}
+serde_yaml = {version = "*"}
+clap = {version = "*", features = ["derive"]}
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3

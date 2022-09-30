@@ -1,0 +1,1 @@
+cd he_lang_macro && cargo build --release && mv target/release/he-lang ../
