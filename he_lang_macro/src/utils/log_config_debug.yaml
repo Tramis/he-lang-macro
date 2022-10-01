@@ -1,14 +1,13 @@
 appenders:
-  output:
+  dev:
     kind: console
     encoder:
-      pattern: ">> {m}{n}"
+      pattern: " [{l}] [{f}:{L}] {m}{n}"
     filters:
       - kind: threshold
-        level: info
+        level: debug
 
 root:
-  level: info
+  level: debug
   appenders:
-    - output
-
+    - dev

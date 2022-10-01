@@ -6,11 +6,9 @@ he-lang 的宏实现
 - [he-lang-macro](#he-lang-macro)
   - [He the Great](#he-the-great)
   - [Usage](#usage)
-  - [design](#design)
-    - [KeyWord](#keyword)
-    - [Macro](#macro)
-    - [Ident](#ident)
-    - [预制表](#预制表)
+  - [Overview](#overview)
+  - [Macro](#macro)
+  - [Predefined](#predefined)
 
 ## He the Great
 无需多言
@@ -18,23 +16,30 @@ he-lang 的宏实现
 ## Usage
 
 ``` bash
-he-lang abc.he
-he-lang print!(1 | 2 | 3)
+he-lang -f abc.he
+he-lang -i print!(1 | 2 | 3)
 # TODO: interactive
 ```
 
-## design
+## Overview
 
-### KeyWord
-1. `'|'`
- （何符号）
-2. `'!'` （宏符号）
-3. `'"'` / `'''` （引号，用于字符串）
-4. `'()'` （括号，用于宏调用或组合值）
+```rust
+a! = {
+    () => {
+        a!
+    };
+    ($a) => a!$a;
+}
 
-### Macro
+print!( a! ( a ) );
 
-宏调用时，将吃掉所有输入，并将其简单替换
+// output:
+//      `a!a`
+```
+
+## Macro
+
+- 宏调用时，将吃掉所有输入，并将其简单替换
 
 ```rust 
 // define macro
@@ -52,81 +57,59 @@ a! = {
 // `print!` is predefined macro
 // use macro
 // 
-// output shoull be: `1 3`
+// output shoull be: 
+// `1 | 3`
 print! (a! (1 | 2 | 3));
 
 
 // nested call
 // 
-// output should be `3`
+// output:
+//  `(3)`
 print! (a! (a! (1 | 2 | 3)));
 
 
 // macro `print!` equals its input
 // 
-// output should be: 
-// `1 | 2`
-// `1 | 2`
+// output: 
+//  `1 | 2`
+//  `1 | 2`
 print! (print!(1 | 2));
 
 ```
 
-常量参数
-
-```rust
-a! = {
-    (0) => {0};
-    ($a | $b) => {
-        $a + a!($b);
-    }
-}
-
-```
-
-### Ident
-
-变量将用于单纯的字符串替换
-
-```rust
-a = 
-```
-
-### 预制表
+## Predefined
 
 - `print!`
 ```rust
 print!(1 | 2);
 print!(1, 2, 3);
 
+// macro `print!` equals its input
 // 
-
-print!(print!(1 | 2));
-
-// if input is not string / int, `print!(a)` equals `print!(string!((!a)))
 // output: 
-// "(!print)"
+//  `1 | 2`
+//  `1 | 2`
+print! (print!(1 | 2));
+
+// output: 
+// `print!`
 print!(print!);
 ```
 
-- `string!`
+- `raw!`
 ```rust
-// "a s v dfv fd"
-print!(string!(a s v dfv fd));
-// 
-print!(print!);
+// output: 
+//  `a s v dfv fd`
+print!(raw!(a s v dfv fd));
 ```
 
-- `$sep`
+- `count!`
 ```rust
-one_two_one! = {
-    ($a, $b) => {$a $b $a};
-}
+// output: 
+//  `4`
+print!(count!(1 | | |));
 
-make_two! = {
-    ($a) => {
-        one_two_one!($a, $sep)
-    };
-}
 
 ```
 - `()`

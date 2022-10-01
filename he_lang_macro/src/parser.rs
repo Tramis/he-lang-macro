@@ -74,11 +74,11 @@ pub fn parse_expr(pair: Pair<Rule>) -> Expression {
                 .to_string();
 
             // predefined macro `string!`
-            if ident.as_str() == "string" {
-                return Expression::Data(HePrimitive::String(
-                    macro_call.next().unwrap().as_str().to_string(),
-                ));
-            }
+            // if ident.as_str() == "string" {
+            //     return Expression::Data(HePrimitive::String(
+            //         macro_call.next().unwrap().as_str().to_string(),
+            //     ));
+            // }
 
             // let params = macro_call.next();
             // if params.is_some() {

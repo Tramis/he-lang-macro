@@ -6,6 +6,9 @@ use log4rs;
 
 pub fn log_init() {
     let init_file = include_str!("./utils/log_config.yaml");
+    #[cfg(debug_assertions)]
+    let init_file = include_str!("./utils/log_config_debug.yaml");
+
     log4rs::init_raw_config(serde_yaml::from_str(init_file).unwrap()).unwrap();
 }
 
@@ -26,6 +29,12 @@ macro_rules! log_success {
 macro_rules! log_normal {
     ($msg: expr) => {
         log::debug!("{}", ansi_term::Colour::Blue.paint(format!("{}", $msg)))
+    };
+}
+
+macro_rules! log_warning {
+    ($msg: expr) => {
+        log::debug!("{}", ansi_term::Colour::Yellow.paint(format!("{}", $msg)))
     };
 }
 
@@ -56,6 +65,7 @@ macro_rules! std_out_msg {
 pub(crate) use log_error;
 pub(crate) use log_msg;
 pub(crate) use log_normal;
+pub(crate) use log_warning;
 pub(crate) use log_success;
 pub(crate) use std_out;
 pub(crate) use std_out_msg;

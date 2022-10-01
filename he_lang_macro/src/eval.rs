@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::{
     escape::Escape,
-    io::{input, log_msg, log_normal, log_success, std_out, std_out_msg},
+    io::{input, log_msg, log_normal, log_success, log_warning, std_out, std_out_msg},
     list::List,
     parser::{he_parse_with_rule, parse_expr, parse_main, parse_params, Rule},
     scope::Scope,
@@ -93,46 +93,43 @@ impl MacroCall {
         log_normal!(format!("evaling macro {self:#?}"));
         (*scope).borrow_mut().stack.push(self.macro_name.clone());
 
-        input();
+        let mut tmp_string = self.origin_param.clone();
+        tmp_string = tmp_string.unescape();
+
         std_out!(format!(
             "{}    {}",
             (*scope).borrow().make_tab(),
-            self.to_string()
+            self.to_string().unescape()
         ));
+        input();
 
-        match self.macro_name.as_str() {
+        let res = match self.macro_name.as_str() {
             "print" => {
-                let mut tmp_string = self.origin_param.clone();
-
                 into_do_it(&mut tmp_string, scope.clone());
 
                 std_out!(format!("`print` output: \"{tmp_string}\""));
-                tmp_string.unescape();
+                tmp_string = tmp_string.unescape();
 
-                (*scope).borrow_mut().stack.pop();
-                return Expression::Data(HePrimitive::String(tmp_string));
+                Expression::Data(HePrimitive::String(tmp_string))
             }
-            "string" => unreachable!("macro `string!` done while compile"),
+            "string" => Expression::Raw(tmp_string),
 
             "count" => {
-                let mut tmp_string = self.origin_param.clone();
-
                 into_do_it(&mut tmp_string, scope.clone());
 
-                tmp_string.escape_parenthese();
+                tmp_string = tmp_string.escape_parenthese();
                 let params = he_parse_with_rule(&tmp_string, Rule::call_params);
                 let params = parse_params(params);
 
-                (*scope).borrow_mut().stack.pop();
                 Expression::Data(HePrimitive::Int(params.len() as i32))
             }
 
             "print_params" => {
-                let mut tmp_string = self.origin_param.clone();
+                tmp_string = tmp_string.unescape();
 
                 into_do_it(&mut tmp_string, scope.clone());
 
-                tmp_string.escape_parenthese();
+                tmp_string = tmp_string.escape_parenthese();
 
                 let params = he_parse_with_rule(&tmp_string, Rule::call_params);
                 let params = parse_params(params);
@@ -141,30 +138,26 @@ impl MacroCall {
                 Expression::Raw(
                     params
                         .into_iter()
-                        .map(|x| {
-                            let mut x = x.to_string();
-                            x.unescape();
-                            x
-                        })
+                        .map(|x| x.to_string().unescape())
                         .collect(),
                 )
             }
 
             name => {
-                let mut tmp_string = self.origin_param.clone();
+                tmp_string = tmp_string.unescape();
 
                 into_do_it(&mut tmp_string, scope.clone());
 
                 log_msg!(ansi_term::Color::Red.paint(format!("'{}'", tmp_string)));
                 if (*scope).borrow().stack.len() > 1 {
-                    tmp_string.escape_parenthese();
+                    tmp_string = tmp_string.escape_parenthese();
                 }
                 log_msg!(ansi_term::Color::Red.paint(format!("'{}'", tmp_string)));
                 crate::parser::test::test_parse_params(&tmp_string);
 
                 let params = parse_params(he_parse_with_rule(&tmp_string, Rule::call_params));
 
-                log_normal!(format!("macro calling: params: {params:#?}"));
+                log_warning!(format!("macro calling: params: {params:#?}"));
 
                 let mac = (*scope).borrow().match_macro(name, params.len()).cloned();
                 match mac {
@@ -174,17 +167,12 @@ impl MacroCall {
                             mac.replace(
                                 params
                                     .into_iter()
-                                    .map(|x| {
-                                        let mut x = x.to_string();
-                                        x.unescape();
-                                        x
-                                    })
+                                    .map(|x| x.to_string().unescape())
                                     .collect(),
                             ),
                         );
 
                         log_normal!(format!("macro call return: {:#?}", res));
-                        (*scope).borrow_mut().stack.pop();
                         // match the macro params
                         res
                     }
@@ -194,7 +182,10 @@ impl MacroCall {
                     ),
                 }
             }
-        }
+        };
+
+        (*scope).borrow_mut().stack.pop();
+        res
     }
 }
 
@@ -265,12 +256,18 @@ impl Macro {
 ///                 ---
 /// ```
 fn do_it(s: &mut String, scope: Rc<RefCell<Scope>>) -> bool {
-    let re_macro_call = regex!(r"[a-zA-Z_][a-zA-Z_0-9]+[[:space:]]*!(.*)");
+    let re_macro_call = regex!(r"[a-zA-Z_][a-zA-Z_0-9]*[\s\t\n]*![\s\t\n]*\(.*\)");
 
     let begin = re_macro_call.find(s);
     match begin {
         Some(begin) => {
-            let pair = he_parse_with_rule(&s.get(begin.start()..).unwrap(), Rule::expression);
+            let tmp_string = s
+                .get(begin.start()..)
+                .unwrap()
+                .to_string()
+                .escape_parenthese();
+
+            let pair = he_parse_with_rule(&tmp_string, Rule::expression);
 
             log_normal!(format!("found expr: {pair:#?}"));
 
@@ -364,7 +361,32 @@ mod test {
         // link_start(print_recurse_call);
         // link_start(nested_call);
 
-        link_start(add_test);
+        link_start(
+            r#"
+            sub1! = {
+                ($a | $b) => string!$b;
+            }
+            
+            add1 ! = {
+                ( ) => | () ;
+                ( | $a) => {
+                    | ( | $a)
+                };
+            }
+            
+            print! ( sub1 ! ( | () ));
+            
+            print! (sub1 ! (sub1 ! ( add1! ( add1 !()) )) );
+        "#,
+        );
+    }
+
+    #[test]
+    fn test_regex() {
+        // let re_macro_call = regex!(r"[a-zA-Z_][a-zA-Z_0-9]*[[space]]*![[space]]*\(.*\)");
+        let re_macro_call = regex!(r"[[space]]");
+
+        println!("{:#?}", re_macro_call.find("a! (  )"));
     }
 
     #[test]

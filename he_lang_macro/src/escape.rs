@@ -1,13 +1,11 @@
-
-
 pub trait Escape {
-    fn escape_parenthese(&mut self);
+    fn escape_parenthese(self) -> Self;
 
-    fn unescape(&mut self);
+    fn unescape(self) -> Self;
 }
 
 impl Escape for String {
-    fn escape_parenthese(&mut self) {
+    fn escape_parenthese(self) -> Self {
         let mut res = String::new();
 
         let mut stk = 0;
@@ -36,11 +34,10 @@ impl Escape for String {
             }
         }
 
-        *self = res
+        res
     }
 
-    fn unescape(&mut self) {
-        *self = self.replace("\\(", "(");
-        *self = self.replace("\\)", ")");
+    fn unescape(self) -> String {
+        self.replace("\\(", "(").replace("\\)", ")")
     }
 }

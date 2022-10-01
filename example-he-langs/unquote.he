@@ -1,0 +1,8 @@
+
+
+unquote! = {
+    ($a) => string!$a;
+}
+
+print! (unquote ! ((a)));
+
